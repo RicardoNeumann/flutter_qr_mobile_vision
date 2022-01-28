@@ -36,6 +36,9 @@ class QrMobileVision {
   static const MethodChannel _channel = const MethodChannel('com.github.rmtmckenzie/qr_mobile_vision');
   static QrChannelReader channelReader = QrChannelReader(_channel);
 
+  static bool rearLens = true;
+  static bool manualFocus= false;
+
   //Set target size before starting
   static Future<PreviewDetails> start({
     required int width,
@@ -54,6 +57,8 @@ class QrMobileVision {
       'targetHeight': height,
       'heartbeatTimeout': 0,
       'formats': formatStrings,
+      'rearLens': rearLens,
+      'manualFocus': manualFocus
     });
 
     // invokeMethod returns Map<dynamic,...> in dart 2.0
@@ -65,6 +70,10 @@ class QrMobileVision {
     num? surfaceWidth = details["surfaceWidth"];
 
     return PreviewDetails(surfaceWidth, surfaceHeight, orientation, textureId);
+  }
+
+  static Future switchCamera() {
+    return _channel.invokeMethod('switch').catchError(print);
   }
 
   static Future stop() {

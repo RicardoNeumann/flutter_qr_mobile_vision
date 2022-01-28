@@ -25,6 +25,8 @@ class QrCamera extends StatefulWidget {
     WidgetBuilder? offscreenBuilder,
     ErrorCallback? onError,
     this.formats,
+    this.rearLens = true,
+    this.manualFocus = false
   })  : notStartedBuilder = notStartedBuilder ?? _defaultNotStartedBuilder,
         offscreenBuilder = offscreenBuilder ?? notStartedBuilder ?? _defaultOffscreenBuilder,
         onError = onError ?? _defaultOnError,
@@ -37,12 +39,16 @@ class QrCamera extends StatefulWidget {
   final WidgetBuilder offscreenBuilder;
   final ErrorCallback onError;
   final List<BarcodeFormats>? formats;
+  final bool rearLens;
+  final bool manualFocus;
 
   @override
   QrCameraState createState() => QrCameraState();
 }
 
 class QrCameraState extends State<QrCamera> with WidgetsBindingObserver {
+
+
   @override
   void initState() {
     super.initState();
@@ -83,6 +89,16 @@ class QrCameraState extends State<QrCamera> with WidgetsBindingObserver {
     );
   }
 
+  void switchCamera() {
+    QrMobileVision.rearLens = !QrMobileVision.rearLens;
+    restart();
+  }
+
+  void switchFocus() {
+    QrMobileVision.manualFocus = !QrMobileVision.manualFocus;
+    restart();
+  }
+
   /// This method can be used to restart scanning
   ///  the event that it was paused.
   void restart() {
@@ -113,6 +129,7 @@ class QrCameraState extends State<QrCamera> with WidgetsBindingObserver {
     return LayoutBuilder(builder: (BuildContext context, BoxConstraints constraints) {
       if (_asyncInitOnce == null && onScreen) {
         _asyncInitOnce = _asyncInit(constraints.maxWidth, constraints.maxHeight);
+
       } else if (!onScreen) {
         return widget.offscreenBuilder(context);
       }

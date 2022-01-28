@@ -3,6 +3,7 @@ package com.github.rmtmckenzie.qrmobilevision;
 import android.Manifest;
 import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.hardware.camera2.CameraMetadata;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -148,50 +149,11 @@ public class QrMobileVisionPlugin implements MethodCallHandler, QrReaderCallback
     }
 
     @Override
-    public void onMethodCall(MethodCall methodCall, Result result) {
+    public void onMethodCall(MethodCall methodCall, @NonNull Result result) {
         switch (methodCall.method) {
-            case "start": {
-                if (permissionDenied) {
-                    permissionDenied = false;
-                    result.error("QRREADER_ERROR", "noPermission", null);
-                } else if (readingInstance != null) {
-                    result.error("ALREADY_RUNNING", "Start cannot be called when already running", "");
-                } else {
-                    lastHeartbeatTimeout = methodCall.argument("heartbeatTimeout");
-                    Integer targetWidth = methodCall.argument("targetWidth");
-                    Integer targetHeight = methodCall.argument("targetHeight");
-                    List<String> formatStrings = methodCall.argument("formats");
-
-                    if (targetWidth == null || targetHeight == null) {
-                        result.error("INVALID_ARGUMENT", "Missing a required argument", "Expecting targetWidth, targetHeight, and optionally heartbeatTimeout");
-                        break;
-                    }
-
-                    BarcodeScannerOptions options = BarcodeFormats.optionsFromStringList(formatStrings);
-
-                    TextureRegistry.SurfaceTextureEntry textureEntry = textures.createSurfaceTexture();
-                    QrReader reader = new QrReader(targetWidth, targetHeight, activity, options,
-                        this, this, textureEntry.surfaceTexture());
-
-                    readingInstance = new ReadingInstance(reader, textureEntry, result);
-                    try {
-                        reader.start(
-                            lastHeartbeatTimeout == null ? 0 : lastHeartbeatTimeout
-                        );
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        result.error("IOException", "Error starting camera because of IOException: " + e.getLocalizedMessage(), null);
-                    } catch (QrReader.Exception e) {
-                        e.printStackTrace();
-                        result.error(e.reason().name(), "Error starting camera for reason: " + e.reason().name(), null);
-                    } catch (NoPermissionException e) {
-                        waitingForPermissionResult = true;
-                        ActivityCompat.requestPermissions(activity,
-                            new String[]{Manifest.permission.CAMERA}, REQUEST_PERMISSION);
-                    }
-                }
+            case "start": start(methodCall, result);
                 break;
-            }
+//                break;
             case "stop": {
                 if (readingInstance != null && !waitingForPermissionResult) {
                     stopReader();
@@ -208,6 +170,50 @@ public class QrMobileVisionPlugin implements MethodCallHandler, QrReaderCallback
             }
             default:
                 result.notImplemented();
+        }
+    }
+
+    public void start(MethodCall methodCall, Result result) {
+        if (permissionDenied) {
+            permissionDenied = false;
+            result.error("QRREADER_ERROR", "noPermission", null);
+        } else if (readingInstance != null) {
+            result.error("ALREADY_RUNNING", "Start cannot be called when already running", "");
+        } else {
+            lastHeartbeatTimeout = methodCall.argument("heartbeatTimeout");
+            Integer targetWidth = methodCall.argument("targetWidth");
+            Integer targetHeight = methodCall.argument("targetHeight");
+            List<String> formatStrings = methodCall.argument("formats");
+            Boolean rearLens = methodCall.argument("rearLens");
+            Boolean manualFocus = methodCall.argument("manualFocus");
+
+            if (targetWidth == null || targetHeight == null) {
+                result.error("INVALID_ARGUMENT", "Missing a required argument", "Expecting targetWidth, targetHeight, and optionally heartbeatTimeout");
+                return;
+            }
+
+            BarcodeScannerOptions options = BarcodeFormats.optionsFromStringList(formatStrings);
+
+            TextureRegistry.SurfaceTextureEntry textureEntry = textures.createSurfaceTexture();
+            QrReader reader = new QrReader(targetWidth, targetHeight, activity, options,
+                this, this, textureEntry.surfaceTexture(), rearLens, manualFocus);
+
+            readingInstance = new ReadingInstance(reader, textureEntry, result);
+            try {
+                reader.start(
+                    lastHeartbeatTimeout == null ? 0 : lastHeartbeatTimeout
+                );
+            } catch (IOException e) {
+                e.printStackTrace();
+                result.error("IOException", "Error starting camera because of IOException: " + e.getLocalizedMessage(), null);
+            } catch (QrReader.Exception e) {
+                e.printStackTrace();
+                result.error(e.reason().name(), "Error starting camera for reason: " + e.reason().name(), null);
+            } catch (NoPermissionException e) {
+                waitingForPermissionResult = true;
+                ActivityCompat.requestPermissions(activity,
+                    new String[]{Manifest.permission.CAMERA}, REQUEST_PERMISSION);
+            }
         }
     }
 

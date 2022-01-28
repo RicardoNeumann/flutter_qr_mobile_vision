@@ -26,7 +26,8 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   String qr;
-  bool camState = false;
+  // bool camState = false;
+  final key = GlobalKey<QrCameraState>();
 
   @override
   initState() {
@@ -35,6 +36,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Plugin example app'),
@@ -45,12 +47,17 @@ class _MyAppState extends State<MyApp> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Expanded(
-                child: camState
-                    ? Center(
+                child:
+        // camState
+        //             ?
+          Center(
                         child: SizedBox(
                           width: 300.0,
                           height: 600.0,
                           child: QrCamera(
+                            rearLens: false,
+                            manualFocus: true,
+                            key: key,
                             onError: (context, error) => Text(
                               error.toString(),
                               style: TextStyle(color: Colors.red),
@@ -71,8 +78,9 @@ class _MyAppState extends State<MyApp> {
                             ),
                           ),
                         ),
-                      )
-                    : Center(child: Text("Camera inactive"))),
+                      ),
+            ),
+                    // : Center(child: Text("Camera inactive"))),
             Text("QRCODE: $qr"),
           ],
         ),
@@ -84,7 +92,7 @@ class _MyAppState extends State<MyApp> {
           ),
           onPressed: () {
             setState(() {
-              camState = !camState;
+              key.currentState?.switchCamera();
             });
           }),
     );

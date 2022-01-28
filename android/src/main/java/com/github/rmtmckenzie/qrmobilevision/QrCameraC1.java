@@ -4,6 +4,7 @@ import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
+import android.hardware.Camera;
 import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.Surface;
@@ -12,6 +13,7 @@ import android.view.WindowManager;
 import com.google.mlkit.vision.common.InputImage;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -29,7 +31,8 @@ class QrCameraC1 implements QrCamera {
     private android.hardware.Camera.CameraInfo info = new android.hardware.Camera.CameraInfo();
     private int targetWidth, targetHeight;
     private android.hardware.Camera camera = null;
-    private Context context;
+    private final Context context;
+    private final Boolean rearLens;
 
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
 
@@ -40,12 +43,13 @@ class QrCameraC1 implements QrCamera {
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
-    QrCameraC1(int width, int height, SurfaceTexture texture, Context context, QrDetector detector) {
+    QrCameraC1(int width, int height, SurfaceTexture texture, Context context, QrDetector detector, Boolean rearLens) {
         this.texture = texture;
         targetHeight = height;
         targetWidth = width;
         this.detector = detector;
         this.context = context;
+        this.rearLens = rearLens;
     }
 
 
@@ -78,14 +82,22 @@ class QrCameraC1 implements QrCamera {
 
     @Override
     public void start() throws QrReader.Exception {
+        HashMap<Integer, Integer> availableCameras = new HashMap<>();
         int numberOfCameras = android.hardware.Camera.getNumberOfCameras();
         info = new android.hardware.Camera.CameraInfo();
         for (int i = 0; i < numberOfCameras; i++) {
             android.hardware.Camera.getCameraInfo(i, info);
-            if (info.facing == android.hardware.Camera.CameraInfo.CAMERA_FACING_BACK) {
-                camera = android.hardware.Camera.open(i);
-                break;
-            }
+            availableCameras.put(info.facing, i);
+        }
+
+        final Integer cameraId;
+        if (!rearLens && availableCameras.containsKey(Camera.CameraInfo.CAMERA_FACING_FRONT)) {
+            cameraId = availableCameras.get(Camera.CameraInfo.CAMERA_FACING_FRONT);
+        } else {
+            cameraId = availableCameras.get(Camera.CameraInfo.CAMERA_FACING_BACK);
+        }
+        if (cameraId != null) {
+            camera = Camera.open(cameraId);
         }
 
         if (camera == null) {
