@@ -76,6 +76,10 @@ class QrMobileVision {
     return _channel.invokeMethod('switch').catchError(print);
   }
 
+  static Future toggleFlash() {
+    return _channel.invokeMethod('toggleFlash').catchError(print);
+  }
+
   static Future stop() {
     channelReader.setQrCodeHandler(null);
     return _channel.invokeMethod('stop').catchError(print);

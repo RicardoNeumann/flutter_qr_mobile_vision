@@ -195,6 +195,31 @@ class QrCameraC1 implements QrCamera {
     }
 
     @Override
+    public void toggleFlash() {
+        Camera.Parameters p = camera.getParameters();
+
+        switch (p.getFlashMode()) {
+            case Camera.Parameters.FLASH_MODE_ON:
+                p.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                break;
+            case Camera.Parameters.FLASH_MODE_OFF:
+                p.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+                break;
+            case Camera.Parameters.FLASH_MODE_AUTO:
+                p.setFlashMode(Camera.Parameters.FLASH_MODE_ON);
+                break;
+            case Camera.Parameters.FLASH_MODE_TORCH:
+                p.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                break;
+            default:
+                p.setFlashMode(Camera.Parameters.FLASH_MODE_AUTO);
+                break;
+        }
+
+        camera.setParameters(p);
+    }
+
+    @Override
     public void stop() {
         if (camera != null) {
             camera.stopPreview();

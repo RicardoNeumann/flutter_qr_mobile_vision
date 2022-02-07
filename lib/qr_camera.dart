@@ -42,6 +42,10 @@ class QrCamera extends StatefulWidget {
   final bool rearLens;
   final bool manualFocus;
 
+  static toggleFlash() {
+    QrMobileVision.toggleFlash();
+  }
+
   @override
   QrCameraState createState() => QrCameraState();
 }
