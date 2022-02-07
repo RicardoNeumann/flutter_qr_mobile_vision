@@ -34,12 +34,24 @@ class _MyAppState extends State<MyApp> {
     super.initState();
   }
 
+  bool manualFocus = false;
+
   @override
   Widget build(BuildContext context) {
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Plugin example app'),
+        actions: [
+          CheckboxListTile(
+              title: Text('Manual Focus'),
+              value: manualFocus, onChanged: (value) {
+                setState(() {
+                  key.currentState?.switchCamera();
+                });
+          }),
+          // CheckboxListTile(value: value, onChanged: onChanged)
+        ],
       ),
       body: Center(
         child: Column(
@@ -98,3 +110,4 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+
